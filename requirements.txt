@@ -1,0 +1,6 @@
+fastapi==0.115.12
+uvicorn==0.34.2
+pillow==11.2.1
+vtracer==1.0.0a4
+pyvips[binary]==3.0.0
+pyvips-binary==8.18.7

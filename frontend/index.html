@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#173f35" />
+    <title>Vectorio — your pixels, untangled</title>
+    <link rel="stylesheet" href="/styles.css?v=exact-png-9" />
+    <link rel="stylesheet" href="/studio.css?v=studio-1" />
+    <script src="/palette.js?v=exact-png-9" defer></script>
+    <script src="/app.js?v=exact-png-9" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Vectorio home"
+        ><span class="brand-icon" aria-hidden="true">v<span>•</span></span
+        >vectorio<span class="brand-tag">THE VECTOR WORKSHOP</span></a
+      >
+      <div class="privacy">
+        <span class="status-dot"></span> Your own little creative space
+      </div>
+      <button id="export" class="button primary" disabled>
+        <span aria-hidden="true">↗</span> Download SVG
+      </button>
+    </header>
+    <main class="app">
+      <aside class="left-panel">
+        <div class="section-title">
+          <span>YOUR WORKSPACE</span><span class="small-tag">01</span>
+        </div>
+        <h1>Upload. Clean up. Download.</h1>
+        <p class="muted intro">
+          Turn your design into editable vectors.<br />
+          Keep the good parts. Lose the rest.
+        </p>
+        <label
+          id="dropzone"
+          class="dropzone"
+          tabindex="0"
+          role="button"
+          aria-label="Upload a PNG"
+          ><input id="file" type="file" accept="image/png" hidden /><span
+            class="upload-icon"
+            >↥</span
+          ><strong>Bring a design in</strong
+          ><span>Drop a PNG or click to browse</span
+          ><small id="upload-limit">PNG · checking server limits…</small></label
+        >
+        <details class="disclosure upload-options">
+          <summary>Trace settings</summary>
+          <div class="disclosure-content">
+            <div class="settings-header">
+              <h2>Trace settings</h2>
+              <span class="tiny">NEXT UPLOAD</span>
+            </div>
+            <label class="field-label" for="profile">Design type</label>
+            <select id="profile">
+              <option value="exact">Exact PNG · preserve every pixel</option>
+              <option value="precise">Logos &amp; text</option>
+              <option value="artwork">
+                Illustrations / simplified artwork
+              </option>
+            </select>
+            <p class="field-help">
+              Exact PNG preserves pixel edges, colors and transparency. Smooth
+              tracing profiles simplify edges and can change small lettering.
+            </p>
+            <span class="field-label">Trace resolution</span>
+            <button
+              data-quality="native"
+              class="button secondary full active"
+              id="native-quality"
+            >
+              Native · preserve source resolution
+            </button>
+            <div class="quality-options" role="group" aria-label="Detail level">
+              <button data-quality="fast">Fast</button
+              ><button data-quality="balanced">Balanced</button
+              ><button data-quality="detail">Detailed</button>
+            </div>
+            <p id="quality-note" class="field-help">
+              No resizing · keeps small lettering · higher memory use
+            </p>
+            <label class="field-label" for="colors"
+              >Color precision <output id="colors-value">8 bits</output></label
+            ><input id="colors" type="range" min="1" max="8" value="8" />
+            <div class="range-labels">
+              <span>Fewer colors</span><span>More nuance</span>
+            </div>
+            <label class="field-label" for="speckle"
+              >Noise filtering <output id="speckle-value">0 px</output></label
+            ><input id="speckle" type="range" min="0" max="64" value="0" />
+            <div class="range-labels">
+              <span>Keep small details</span><span>Simplify</span>
+            </div>
+            <label class="field-label" for="mode">Curve style</label
+            ><select id="mode">
+              <option value="spline">Smooth curves</option>
+              <option value="polygon">Angular paths</option>
+              <option value="pixel">Exact pixel contours · larger SVG</option>
+            </select>
+            <p class="field-help">
+              Smooth curves approximate edges. Exact pixel contours preserve
+              raster edges, including their stair steps.
+            </p>
+          </div>
+        </details>
+        <details class="disclosure recent-options">
+          <summary>Recent files</summary>
+          <div class="disclosure-content">
+            <div class="recent-header">
+              <h2>Recent projects</h2>
+              <button
+                id="refresh"
+                class="text-button"
+                aria-label="Refresh recent projects"
+              >
+                ↻
+              </button>
+            </div>
+            <div id="recent">
+              <p class="field-help">Your designs will live here.</p>
+            </div>
+          </div>
+        </details>
+        <div class="local-note">
+          <span>◈</span>
+          <div>
+            <strong>A little more private.</strong>
+            <p>
+              No cloud tracing. No external APIs.<br />Just your design and this
+              server.
+            </p>
+          </div>
+        </div>
+      </aside>
+      <section class="workspace" aria-label="Vector editor">
+        <div class="document-bar">
+          <div>
+            <span class="file-icon">▧</span
+            ><strong id="document-name">Your artboard</strong
+            ><span id="document-badge" class="document-badge">UNTITLED</span>
+          </div>
+          <span id="save-state" class="tiny" aria-live="polite"></span>
+        </div>
+        <div class="editor-toolbar">
+          <div class="tool-group">
+            <button
+              data-tool="select"
+              class="tool active"
+              title="Select (V)"
+              aria-label="Select shapes"
+            >
+              ↖ Select</button
+            ><button
+              data-tool="pan"
+              class="tool"
+              title="Pan (H)"
+              aria-label="Pan canvas"
+            >
+              ✥ Move</button
+            ><button
+              data-tool="erase"
+              class="tool"
+              title="Remove shape (E)"
+              aria-label="Remove shape"
+            >
+              ⌫ Erase
+            </button>
+          </div>
+          <div class="tool-group">
+            <button
+              id="undo"
+              class="tool"
+              title="Undo (Ctrl+Z)"
+              aria-label="Undo"
+              disabled
+            >
+              ↶</button
+            ><button
+              id="redo"
+              class="tool"
+              title="Redo (Ctrl+Shift+Z)"
+              aria-label="Redo"
+              disabled
+            >
+              ↷</button
+            ><span class="toolbar-divider"></span
+            ><button id="compare" class="text-button" disabled>
+              ◐ Original
+            </button>
+          </div>
+        </div>
+        <div id="canvas" class="canvas">
+          <div class="canvas-caption">
+            <span class="status-dot"></span
+            ><span id="canvas-hint"
+              >A little space to make something yours</span
+            >
+          </div>
+          <div id="empty" class="empty-state">
+            <div class="empty-art" aria-hidden="true">
+              <svg
+                viewBox="0 0 300 190"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="33"
+                  y="26"
+                  width="126"
+                  height="140"
+                  rx="5"
+                  fill="#e3e5d2"
+                  transform="rotate(-12 33 26)"
+                />
+                <path d="M49 102L99 46L145 115L93 153Z" fill="#a5b599" />
+                <rect
+                  x="132"
+                  y="27"
+                  width="126"
+                  height="141"
+                  rx="5"
+                  fill="#fffdf6"
+                  stroke="#cecdbf"
+                  transform="rotate(9 132 27)"
+                />
+                <path
+                  d="M197 54L207 81L235 72L223 99L250 111L222 120L231 149L205 135L191 160L184 132L155 139L170 115L145 100L174 93L167 65L190 79Z"
+                  fill="#e77142"
+                />
+                <rect
+                  x="148"
+                  y="48"
+                  width="100"
+                  height="111"
+                  stroke="#173f35"
+                  stroke-dasharray="3 4"
+                />
+                <g fill="#fffdf6" stroke="#173f35">
+                  <rect x="145" y="45" width="6" height="6" />
+                  <rect x="245" y="45" width="6" height="6" />
+                  <rect x="145" y="156" width="6" height="6" />
+                  <rect x="245" y="156" width="6" />
+                </g>
+                <path
+                  d="M236 129L241 161L248 151L260 158L264 151L252 144L263 139Z"
+                  fill="#173f35"
+                  stroke="#fffdf6"
+                  stroke-width="2"
+                />
+                <circle cx="48" cy="156" r="13" fill="#173f35" />
+                <circle
+                  cx="68"
+                  cy="156"
+                  r="13"
+                  fill="#edb64f"
+                  stroke="#f7f5ed"
+                  stroke-width="3"
+                />
+              </svg>
+            </div>
+            <span class="eyebrow">FROM PIXELS TO POSSIBILITIES</span>
+            <h2>Good things start<br />with a little <em>shape.</em></h2>
+            <p>
+              Bring in your artwork. Find its colors.<br />Make it yours, one
+              detail at a time.
+            </p>
+            <button id="sample" class="button secondary">
+              Explore a sample <span>↗</span></button
+            ><span class="empty-footnote"
+              >PNG in. Beautiful, editable SVG out.</span
+            >
+          </div>
+          <div id="processing" class="processing" hidden>
+            <div class="spinner"></div>
+            <h2 id="processing-title">Uploading your design</h2>
+            <p id="processing-stage" aria-live="polite">Preparing…</p>
+            <progress id="upload-progress" max="100" value="0"></progress
+            ><button id="cancel" class="text-button">Cancel</button>
+          </div>
+          <div id="artboard" class="artboard" hidden></div>
+          <img id="original-image" alt="Original uploaded design" hidden />
+          <div id="crop-overlay" hidden></div>
+          <div class="canvas-bottom">
+            <span id="dimensions">PNG → SVG</span>
+            <div class="zoom-control">
+              <button id="zoom-out" aria-label="Zoom out">−</button
+              ><span id="zoom-label">100%</span
+              ><button id="zoom-in" aria-label="Zoom in">+</button><span></span
+              ><button id="fit">Fit</button>
+            </div>
+          </div>
+        </div>
+        <footer class="workspace-footer">
+          <span
+            ><kbd>V</kbd> Select <kbd>B</kbd> Background
+            <kbd>⌫</kbd> Delete</span
+          ><span id="shape-count">Your next design starts here</span>
+        </footer>
+      </section>
+      <aside class="right-panel" aria-label="Edit your vector">
+        <div class="section-title">
+          <span>THE COLOR DESK</span
+          ><span class="small-tag">EDIT / REFINE</span>
+        </div>
+        <div class="inspector-block palette-block">
+          <div class="palette-heading">
+            <h2>Color stories<span class="palette-heading-dot">.</span></h2>
+            <span id="palette-count">—</span>
+          </div>
+          <p class="palette-intro">Gather shades. Find the perfect balance.</p>
+          <div class="palette-grouping-controls">
+            <label for="palette-grouping">Group shades</label>
+            <select id="palette-grouping" disabled>
+              <option value="tight">Precise</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="broad">Broader</option>
+            </select>
+            <button id="palette-regroup" class="text-button" disabled>
+              Auto group
+            </button>
+          </div>
+          <div id="palette" class="palette">
+            <span class="field-help">Colors appear after tracing.</span>
+          </div>
+          <div class="palette-split-zone">
+            <span aria-hidden="true">＋</span> Drop here to make a new circle
+          </div>
+          <label class="palette-detail-toggle"
+            ><input id="palette-expand" type="checkbox" /> Show every individual
+            shade</label
+          >
+          <div class="palette-actions">
+            <button
+              id="palette-merge-selected"
+              disabled
+              title="Merge selected shades into one color"
+            >
+              <span aria-hidden="true">○⇢○</span>Merge
+            </button>
+            <button
+              id="palette-split"
+              disabled
+              title="Separate selected colors into individual circles without recoloring"
+            >
+              <span aria-hidden="true">◉↗</span>Split
+            </button>
+            <button id="palette-edit" disabled title="Edit the selected color">
+              <span aria-hidden="true">◌✎</span>Edit
+            </button>
+          </div>
+          <button id="palette-restore" class="text-button full" disabled>
+            Restore merged shades
+          </button>
+          <button id="palette-tidy" class="text-button full" disabled>
+            Merge near-identical shades
+          </button>
+          <p class="field-help">
+            Auto group organizes circles and keeps every shade. Merge combines
+            selected fills; Undo or Restore merged shades reverses a merge.
+          </p>
+          <p id="palette-selection" class="field-help" aria-live="polite">
+            Select a color or group.
+          </p>
+          <button id="palette-remove" class="button danger full" disabled>
+            Remove selected color
+          </button>
+          <details class="disclosure subtle">
+            <summary>Move without dragging · How to use</summary>
+            <p class="field-help">
+              Drag a small shade into a circle to group it, or into empty space
+              to split it out. Drag the circle's rim onto another circle to join
+              groups. Every drop joins or separates circles without recoloring.
+              A compact bubble stays together when dragged out. Show all shades
+              to drag an exact color. Split separates selected colors; Restore
+              merged shades brings back colors combined by Merge. Undo reverses
+              any action.
+            </p>
+            <label class="field-label" for="palette-target"
+              >Target circle</label
+            >
+            <select id="palette-target" disabled></select>
+            <button id="palette-merge" class="button secondary full" disabled>
+              Move into circle
+            </button>
+          </details>
+        </div>
+        <div class="quick-cleanup">
+          <button id="auto-background" class="button secondary full" disabled>
+            ◈ Remove edge background
+          </button>
+        </div>
+        <div class="inspector-block">
+          <div class="step-title">
+            <span>01</span>
+            <h2>Remove a color</h2>
+          </div>
+          <p class="muted">
+            Pick a color, then remove it from the whole image.
+          </p>
+          <button
+            id="pick-remove-color"
+            data-tool="color"
+            class="button secondary full"
+            aria-pressed="false"
+            disabled
+          >
+            Pick color from canvas
+          </button>
+          <div class="color-row">
+            <label for="remove-color-value">Color to remove</label>
+            <input
+              id="remove-color-value"
+              type="color"
+              value="#ffffff"
+              disabled
+            />
+          </div>
+          <details class="disclosure subtle">
+            <summary>Include similar shades</summary>
+            <label class="field-label" for="remove-color-tolerance"
+              >Color tolerance
+              <output id="remove-color-tolerance-value">0</output></label
+            >
+            <input
+              id="remove-color-tolerance"
+              type="range"
+              min="0"
+              max="100"
+              value="0"
+              disabled
+            />
+            <p class="field-help">
+              0 matches the exact color. Increase it for nearby shades.
+            </p>
+          </details>
+          <p id="remove-color-count" class="field-help" aria-live="polite">
+            Choose a color after tracing.
+          </p>
+          <button id="remove-color" class="button danger full" disabled>
+            Remove color
+          </button>
+        </div>
+        <div class="inspector-block selection-block">
+          <h2>Remove a part</h2>
+          <p id="selection-info" class="muted">
+            Click a part to select it, or use Erase to remove it directly.
+          </p>
+          <button id="delete-selection" class="button danger full" disabled>
+            ⌫ Remove selected
+          </button>
+        </div>
+        <details class="disclosure more-editing">
+          <summary>More editing tools</summary>
+          <div class="disclosure-content">
+            <div class="inspector-block">
+              <div class="step-title">
+                <span>01</span>
+                <h2>Clear the background</h2>
+              </div>
+              <p class="muted">
+                Pick a background region on your design, or let us find the edge
+                color.
+              </p>
+              <button id="pick-background" class="text-button full" disabled>
+                Pick a region on canvas →</button
+              ><label class="checkbox-label"
+                ><input id="same-color" type="checkbox" /> Remove every shape of
+                that color</label
+              ><label class="field-label" for="tolerance"
+                >Color tolerance <output id="tolerance-value">12</output></label
+              ><input
+                id="tolerance"
+                type="range"
+                min="0"
+                max="100"
+                value="12"
+              />
+              <p class="field-help">
+                Higher values include similar shades. Undo if a detail
+                disappears.
+              </p>
+            </div>
+            <div class="inspector-block">
+              <div class="step-title">
+                <span>03</span>
+                <h2>Make it yours</h2>
+              </div>
+              <div class="color-row">
+                <label for="fill">Shape color</label
+                ><input id="fill" type="color" value="#7355e8" disabled />
+              </div>
+              <button id="select-color" class="text-button full" disabled>
+                Select matching color
+              </button>
+            </div>
+            <div class="inspector-block">
+              <div class="step-title">
+                <span>04</span>
+                <h2>The finishing touches</h2>
+              </div>
+              <button id="crop-button" class="button secondary full" disabled>
+                ⌗ Crop to an area</button
+              ><button id="reset-crop" class="text-button full" disabled>
+                Reset crop</button
+              ><button id="reset" class="text-button full" disabled>
+                Reset all edits
+              </button>
+              <p class="field-help">
+                Drag a crop rectangle on the canvas. Export keeps crisp vector
+                paths at any scale.
+              </p>
+            </div>
+            <div class="tip-card">
+              <span class="eyebrow">STUDIO NOTE</span>
+              <p>
+                Logos, illustrations, and flat colors trace best. A photograph
+                becomes a stylized vector.
+              </p>
+              <p id="fidelity-note">
+                Native resolution keeps the source detail. Tracing approximates
+                artwork; low-resolution text cannot recover missing font detail.
+              </p>
+              <span>Made of paths, not pixels. ↗</span>
+            </div>
+          </div>
+        </details>
+      </aside>
+    </main>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </body>
+</html>

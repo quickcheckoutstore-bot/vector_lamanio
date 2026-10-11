@@ -1,0 +1,63 @@
+services:
+  web:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8000}:8000"
+    volumes:
+      - vectorio-data:/data
+    environment:
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-256}
+      MAX_IMAGE_PIXELS: ${MAX_IMAGE_PIXELS:-100000000}
+      MAX_TRACE_DIMENSION: ${MAX_TRACE_DIMENSION:-4096}
+      MAX_NATIVE_PIXELS: ${MAX_NATIVE_PIXELS:-16000000}
+      MAX_PENDING_JOBS: ${MAX_PENDING_JOBS:-8}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    mem_limit: ${WEB_MEMORY:-512m}
+    cpus: ${WEB_CPUS:-0.5}
+    init: true
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  worker:
+    build:
+      context: .
+      target: runtime
+    command: [python, -m, backend.worker]
+    network_mode: none
+    volumes:
+      - vectorio-data:/data
+    environment:
+      MAX_IMAGE_PIXELS: ${MAX_IMAGE_PIXELS:-100000000}
+      MAX_TRACE_DIMENSION: ${MAX_TRACE_DIMENSION:-4096}
+      MAX_NATIVE_PIXELS: ${MAX_NATIVE_PIXELS:-16000000}
+      JOB_TIMEOUT_SECONDS: ${JOB_TIMEOUT_SECONDS:-600}
+      RETENTION_HOURS: ${RETENTION_HOURS:-24}
+      MAX_SVG_PATHS: ${MAX_SVG_PATHS:-20000}
+      MAX_SVG_MB: ${MAX_SVG_MB:-24}
+    mem_limit: ${WORKER_MEMORY:-2g}
+    cpus: ${WORKER_CPUS:-1.0}
+    init: true
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  vectorio-data:
